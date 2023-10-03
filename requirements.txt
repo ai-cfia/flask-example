@@ -1,0 +1,11 @@
+cryptography==41.0.4
+hypercorn==0.14.4
+PyJWT==2.8.0
+python-dotenv==1.0.0
+PyYAML==6.0.1
+quart==0.18.4
+quart-cors==0.6.0
+Quart-JWT-Extended==0.1.0
+Quart-Session==2.0.0
+requests==2.31.0
+coverage
