@@ -1,9 +1,7 @@
 import unittest
-
 from app import app
-from unittest import IsolatedAsyncioTestCase
 
-class TestQuartRoutes(IsolatedAsyncioTestCase):
+class TestRoutes(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -13,28 +11,28 @@ class TestQuartRoutes(IsolatedAsyncioTestCase):
     def setUp(self):
         self.client = app.test_client()
 
-    async def test_health_route(self):
-        response = await self.client.get("/health")
+    def test_health_route(self):
+        response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(await response.get_data(), b"ok")
+        self.assertEqual(response.data, b"ok")
 
-    async def test_hello_world_authenticated(self):
+    def test_hello_world_authenticated(self):
         #TODO
         pass
 
-    async def test_hello_world_no_token(self):
-        response = await self.client.get("/")
-        self.assertEqual(response.status_code, 302) 
+    def test_hello_world_no_token(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 302)
 
-    async def test_hello_world_valid_token(self):
+    def test_hello_world_valid_token(self):
         #TODO
         pass
 
-    async def test_hello_world_invalid_token(self):
+    def test_hello_world_invalid_token(self):
         invalid_token = 'invalid_token_here'
-        response = await self.client.get(f"/?token={invalid_token}")
-        self.assertEqual(response.status_code, 200) 
-        self.assertEqual(await response.get_data(as_text=True), 'Invalid Token!')
+        response = self.client.get(f"/?token={invalid_token}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.decode('utf-8'), 'Invalid Token!')
 
 
 if __name__ == "__main__":
