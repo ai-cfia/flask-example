@@ -1,34 +1,47 @@
 import unittest
-from app import decode_jwt_token
 from datetime import datetime, timedelta
+
 import jwt
 
-class TestDecodeJWT(unittest.TestCase):
+from app import JWTDecodingError, decode_jwt_token, generate_jwt_token
 
+
+class TestDecodeJWT(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        with open('keys/client_public_key.pem', 'rb') as f:
-            cls.public_key = f.read().decode('utf-8')
+        with open("tests/test_keys/public_key.pem", "rb") as f:
+            cls.public_key = f.read()
+        with open("tests/test_keys/private_key.pem", "rb") as f:
+            cls.private_key = f.read()
 
-    def test_decode_valid_jwt(self):
-        with open('keys/client_private_key.pem', 'rb') as f:
-            private_key = f.read().decode('utf-8')
-        data = {'user': 'testuser'}
-        expiration_seconds=300
-        expiration_time = datetime.utcnow() + timedelta(seconds=expiration_seconds)
-        expiration_timestamp = int(expiration_time.timestamp())
-        data['exp'] = expiration_timestamp
-        token = jwt.encode(data, private_key, algorithm='RS256')
+    def test_encode_decode_valid_jwt(self):
+        data = {"user": "testuser"}
+        algorithm = "RS256"
+        app_id = "test_app"
+        expiration_seconds = 300
+        headers = {
+            "alg": algorithm,
+            "app_id": app_id,
+            "typ": "JWT",
+            "field1": "value1",
+            "field2": "value2",
+        }
+        expiration = datetime.utcnow() + timedelta(seconds=expiration_seconds)
+        timestamp = int(expiration.timestamp())
+        token = generate_jwt_token(
+            data, self.private_key, expiration_seconds, algorithm, app_id, headers
+        )
         unverified_header = jwt.get_unverified_header(token)
-        self.assertEqual(unverified_header['alg'], 'RS256')
+        self.assertDictEqual(unverified_header, headers)
         decoded_data = decode_jwt_token(token, self.public_key)
-        self.assertEqual(decoded_data['user'], 'testuser')
-        self.assertEqual(decoded_data['exp'], expiration_timestamp)
+        self.assertEqual(decoded_data["user"], "testuser")
+        self.assertLessEqual(decoded_data["exp"], timestamp + 1)
 
     def test_decode_invalid_jwt(self):
         invalid_token = "invalid.token.here"
-        token = decode_jwt_token(invalid_token, self.public_key)
-        assert not token, f"expected token to be None, but it was {token}"
+        with self.assertRaises(JWTDecodingError):
+            decode_jwt_token(invalid_token, self.public_key)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
