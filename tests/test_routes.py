@@ -1,13 +1,13 @@
 import unittest
+from unittest.mock import patch
 
-from app import JWTDecodingError, app, decode_jwt_token
+from app import app
 
 
 class TestRoutes(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        with open("tests/test_keys/public_key.pem", "rb") as f:
-            cls.public_key = f.read()
+        pass
 
     def setUp(self):
         self.client = app.test_client()
@@ -17,22 +17,25 @@ class TestRoutes(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, b"ok")
 
-    def test_hello_world_authenticated(self):
-        # TODO
-        pass
+    @patch("app.membrane_login_required")
+    @patch("app.membrane_current_user")
+    def test_example_endpoint_with_login(self, mock_current_user, mock_login_required):
+        mock_current_user.id = "test_email@example.com"
+        mock_login_required.side_effect = lambda func: func
 
-    def test_hello_world_no_token(self):
         response = self.client.get("/")
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data.decode("utf-8"), "Hello, test_email@example.com!"
+        )
 
-    def test_hello_world_valid_token(self):
-        # TODO
-        pass
+    @patch("app.membrane_login_required")
+    def test_example_endpoint_without_login(self, mock_login_required):
+        mock_login_required.side_effect = lambda func: func
 
-    def test_hello_world_invalid_token(self):
-        invalid_token = "invalid_token_here"
-        with self.assertRaises(JWTDecodingError):
-            decode_jwt_token(invalid_token, self.public_key)
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.decode("utf-8"), "Hello, world!")
 
 
 if __name__ == "__main__":
