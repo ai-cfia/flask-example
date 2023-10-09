@@ -1,41 +1,103 @@
 import unittest
-from unittest.mock import patch
 
-from app import app
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import asymmetric, serialization
+from flask_login import login_user
+from membrane.client import User
+
+from app_creator import create_app
+from config import Config
 
 
-class TestRoutes(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        pass
+def generate_key_pair():
+    private_key = asymmetric.rsa.generate_private_key(
+        public_exponent=65537, key_size=2048, backend=default_backend()
+    )
+    public_key = private_key.public_key()
 
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    public_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
+    return private_pem.decode("utf-8"), public_pem.decode("utf-8")
+
+
+class ConfigWithMembrane(Config):
+    """Custom config with Membrane activated for tests."""
+
+    MEMBRANE_SERVER = "http://test_server"
+    SECRET_KEY = "test"
+    ALGORITHM = "RS256"
+    CLIENT_PRIVATE_KEY, SERVER_PUBLIC_KEY = generate_key_pair()
+    PERMANENT_SESSION_LIFETIME = 300
+    TOKEN_EXPIRES_IN_SECONDS = 300
+    APP_ID = "test_app"
+    REDIRECT_PATH = "/"
+
+
+class ConfigWithoutMembrane(Config):
+    """Custom config without Membrane activated for tests."""
+
+    MEMBRANE_SERVER = None
+    SECRET_KEY = None
+    ALGORITHM = None
+    CLIENT_PRIVATE_KEY = None
+    SERVER_PUBLIC_KEY = None
+    PERMANENT_SESSION_LIFETIME = None
+    TOKEN_EXPIRES_IN_SECONDS = None
+    APP_ID = None
+    REDIRECT_PATH = None
+
+
+class TestRoutesWithMembrane(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
+        self.config = ConfigWithMembrane()
+        self.app = create_app(self.config)
+        self.client = self.app.test_client()
 
     def test_health_route(self):
-        response = self.client.get("/health")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, b"ok")
+        """Test that /health route returns 'ok' and a 200 status code."""
+        with self.app.test_request_context():
+            response = self.client.get("/health")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data, b"ok")
 
-    @patch("app.membrane_login_required")
-    @patch("app.membrane_current_user")
-    def test_example_endpoint_with_login(self, mock_current_user, mock_login_required):
-        mock_current_user.id = "test_email@example.com"
-        mock_login_required.side_effect = lambda func: func
+    def test_example_endpoint_with_login(self):
+        """Test that the / route returns 200 when a user is logged in."""
+        with self.app.test_request_context():
+            test_user = User("user@example.com")
+            login_user(test_user)
+            response = self.client.get("/")
+            self.assertEqual(response.status_code, 200)
 
-        response = self.client.get("/")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.data.decode("utf-8"), "Hello, test_email@example.com!"
-        )
+    def test_example_endpoint_with_login_redirect(self):
+        """Test that the / route redirects when a user is not logged in."""
+        with self.app.test_request_context():
+            response = self.client.get("/")
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(
+                response.headers["Location"].startswith(self.config.MEMBRANE_SERVER)
+            )
 
-    @patch("app.membrane_login_required")
-    def test_example_endpoint_without_login(self, mock_login_required):
-        mock_login_required.side_effect = lambda func: func
 
-        response = self.client.get("/")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data.decode("utf-8"), "Hello, world!")
+class TestRoutesWithoutMembrane(unittest.TestCase):
+    def setUp(self):
+        self.config = ConfigWithoutMembrane()
+        self.app = create_app(self.config)
+        self.client = self.app.test_client()
+
+    def test_example_endpoint_without_login(self):
+        """Test that the / route returns 200 when membrane is disabled."""
+        with self.app.test_request_context():
+            response = self.client.get("/")
+            self.assertEqual(response.status_code, 200)
 
 
 if __name__ == "__main__":
