@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, request
-from membrane.client import membrane_current_user, membrane_login_required
+from membrane.client.flask import membrane_current_user, membrane_login_required
 
 main = Blueprint("main", __name__)
 

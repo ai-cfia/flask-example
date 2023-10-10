@@ -1,5 +1,5 @@
 from flask import Flask
-from membrane.client import configure_membrane
+from membrane.client.flask import configure_membrane
 
 from config import Config
 
@@ -14,7 +14,7 @@ def create_app(config: Config):
     app.register_blueprint(main_blueprint)
 
     # Register Membrane's auth blueprint
-    from membrane.client import blueprint as membrane_blueprint
+    from membrane.client.flask import blueprint as membrane_blueprint
 
     app.register_blueprint(membrane_blueprint)
 
