@@ -14,9 +14,10 @@ DEFAULT_REDIRECT_PATH = "/"
 load_dotenv()
 
 
-def read_key(membrane_server, env):
+def read_membrane_key(membrane_server, env_variable):
     if membrane_server:
-        return open(os.getenv(env), "rb").read()
+        with open(os.getenv(env_variable), "rb") as f:
+            return f.read()
 
 
 @dataclass
@@ -29,10 +30,10 @@ class Config:
     MEMBRANE_SERVER = os.getenv("FLASK_EXAMPLE_MEMBRANE_SERVER")
     SECRET_KEY = os.getenv("FLASK_EXAMPLE_SECRET_KEY")
     ALGORITHM = os.getenv("FLASK_EXAMPLE_ALGORITHM")
-    SERVER_PUBLIC_KEY = read_key(
+    SERVER_PUBLIC_KEY = read_membrane_key(
         MEMBRANE_SERVER, "FLASK_EXAMPLE_SERVER_PUBLIC_KEY_FILE"
     )
-    CLIENT_PRIVATE_KEY = read_key(
+    CLIENT_PRIVATE_KEY = read_membrane_key(
         MEMBRANE_SERVER, "FLASK_EXAMPLE_CLIENT_PRIVATE_KEY_FILE"
     )
     PERMANENT_SESSION_LIFETIME = int(
