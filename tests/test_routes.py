@@ -6,7 +6,7 @@ from flask_login import login_user
 from membrane.client.flask import User
 
 from config import Config
-from factory import create_app
+from app_creator import create_app
 
 
 def generate_key_pair():
