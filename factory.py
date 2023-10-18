@@ -9,7 +9,7 @@ def create_app(config: Config):
     app.config.from_object(config)
 
     # Register the main blueprint
-    from main import main as main_blueprint
+    from routes import blueprint as main_blueprint
 
     app.register_blueprint(main_blueprint)
 

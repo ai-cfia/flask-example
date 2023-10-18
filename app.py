@@ -1,4 +1,4 @@
-from app_creator import create_app
+from factory import create_app
 from config import Config
 
 config = Config()

@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives import asymmetric, serialization
 from flask_login import login_user
 from membrane.client.flask import User
 
-from app_creator import create_app
+from factory import create_app
 from config import Config
 
 
