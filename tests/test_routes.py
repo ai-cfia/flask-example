@@ -5,8 +5,8 @@ from cryptography.hazmat.primitives import asymmetric, serialization
 from flask_login import login_user
 from membrane.client.flask import User
 
-from factory import create_app
 from config import Config
+from factory import create_app
 
 
 def generate_key_pair():
@@ -84,6 +84,37 @@ class TestRoutesWithMembrane(unittest.TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertTrue(
                 response.headers["Location"].startswith(self.config.MEMBRANE_SERVER)
+            )
+
+    def test_logout(self):
+        """Test that the logout route redirects to root with no cookie."""
+        with self.app.test_request_context():
+            test_user = User("user@example.com")
+            login_user(test_user)
+            response = self.client.get("/logout", follow_redirects=False)
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(
+                response.headers["Location"].endswith(self.config.REDIRECT_PATH)
+            )
+
+    def test_login_when_user_not_logged_in(self):
+        """Test that the login route redirects to membrane when no user is logged in."""
+        with self.app.test_request_context():
+            response = self.client.get("/login", follow_redirects=False)
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(
+                response.headers["Location"].startswith(self.config.MEMBRANE_SERVER)
+            )
+
+    def test_login_when_user_logged_in(self):
+        """Test that the login route redirects to root when a user is logged in."""
+        with self.app.test_request_context():
+            test_user = User("user@example.com")
+            login_user(test_user)
+            response = self.client.get("/login", follow_redirects=False)
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(
+                response.headers["Location"].endswith(self.config.REDIRECT_PATH)
             )
 
 
