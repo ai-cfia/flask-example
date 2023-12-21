@@ -26,12 +26,12 @@ def create_app(config: Config):
         "auth_url": config.MEMBRANE_SERVER,
     }
     configure_membrane(
-        active=bool(config.MEMBRANE_SERVER),
         app=app,
         certificate=certificate_data,
         token_expiration=config.TOKEN_EXPIRES_IN_SECONDS,
         custom_claims=None,
-        redirect_path=config.REDIRECT_PATH,
+        landing_url=config.REDIRECT_PATH,
+        logged_out_url=config.REDIRECT_PATH,
     )
 
     return app
