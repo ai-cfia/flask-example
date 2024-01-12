@@ -1,0 +1,10 @@
+{
+  "python.testing.unittestEnabled": true,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.trimAutoWhitespace": true
+  },
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true
+}
